@@ -47,7 +47,7 @@ function RightPaneScreen() {
           <Card>
             <div className='flex items-center justify-between'>
                 <div className='flex gap-4 items-center '>
-                    <img src='/logo12-removebg-preview.png' className='w-12 h-22'/>
+                    <img src='/logo12water.png' className='w-12 h-22'/>
                     <div>
                       <h6>title dummy</h6>
                       <h6>Language: C++</h6>
@@ -63,7 +63,7 @@ function RightPaneScreen() {
           <Card>
             <div className='flex items-center justify-between'>
                 <div className='flex gap-4 items-center '>
-                    <img src='/logo12-removebg-preview.png' className='w-12 h-22'/>
+                    <img src='/logo12water.png' className='w-12 h-22'/>
                     <div>
                       <h6>DSA</h6>
                       <h6>Language: Python</h6>

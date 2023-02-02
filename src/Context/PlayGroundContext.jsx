@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect } from "react";
 import { v4 as uuid } from 'uuid';
-import { auth, db } from '../firebaseConfig';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from "../firebaseConfig";
+import { useAuthState } from 'react-firebase-hooks/auth'
 
 export const PlayGroundContext = createContext();
 
@@ -34,100 +34,98 @@ export const languageMap = {
     }
 }
 
-const PlaygroundProvider = ({ children }) => {
-    const [user] = useState(auth);
+const PlayGroundProvider = ({ children }) => {
+    const [user] = useAuthState(auth);
     const [firstLoad, setFirstLoad] = useState(true);
-    const intialItems = {
+    const initialItems = {
         [uuid()]: {
             title: "DSA",
             playgrounds: {
                 [uuid()]: {
-                    title: "Arrays",
+                    title: "Stack Implementation",
                     language: "cpp",
                     code: languageMap["cpp"].defaultCode,
                 },
                 [uuid()]: {
-                    title: "Dsa",
+                    name: "Array",
                     language: "javascript",
                     code: languageMap["javascript"].defaultCode,
                 },
             }
-        }
+        },
     }
-    const [folders, setFolders] = useState(() => {
-        let localData = localStorage.getItem("playground-data");
-        if (localData === null || localData === undefined) {
-            return intialItems;
-        }
-        return JSON.parse(localData);
 
-    });
+    const [folders, setFolders] = useState(null)
 
     useEffect(() => {
-        if (user && firstLoad) { // we are geting data from the firebase
-            const resultRef = db.collection("users").doc(user.uid);
-            resultRef.get().then((response) => {
-                setFolders(response.data());
+        console.log(folders)
+        console.log( user?.uid)
+
+        if (firstLoad && user) {
+            const resultsRef = db.collection('userData').doc(user?.uid);
+            resultsRef.get().then((response) => {
+                setFolders(response.data())
                 setFirstLoad(false);
-            }).catch((err) => {
-                console.log(err)
-            })
+            }).catch((error) => {
+                console.log("error", error)
+            });
         }
-        if (user && !firstLoad) {   // we are sending data to firebase
-            const resultRef = db.collection("users").doc(user.uid);
-            resultRef.set(folders).then((response) => {
-                console.log("Data saved successfully");
-            }).catch((err) => {
-                console.log(err)
-            })
-        }
-        else {
-            localStorage.setItem("playground-data", JSON.stringify(folders));
+        if (user && !firstLoad) {
+            const resultsRef = db.collection('userData').doc(user?.uid);
+            resultsRef.set(folders ?folders: initialItems).then((response) => {
+                console.log("request updated")
+            });
         }
     }, [folders, user])
 
     const deleteCard = (folderId, cardId) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            delete newFolders[folderId].playgrounds[cardId]
-            return newFolders;
-        })
+        setFolders((oldState) => {
+            const newState = { ...oldState };
+            delete newState[folderId].playgrounds[cardId];
+            return newState;
+        });
     }
 
     const deleteFolder = (folderId) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            delete newFolders[folderId];
-            return newFolders;
-        })
+        setFolders((oldState) => {
+            const newState = { ...oldState };
+            delete newState[folderId];
+            return newState;
+        });
     }
 
     const addFolder = (folderName) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            newFolders[uuid()] = {
+        setFolders((oldState) => {
+            const newState = { ...oldState };
+
+            newState[uuid()] = {
                 title: folderName,
                 playgrounds: {}
             }
-            return newFolders;
+
+            return newState;
         })
     }
 
     const addPlayground = (folderId, playgroundName, language) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            newFolders[folderId].playgrounds[uuid()] = {
+        setFolders((oldState) => {
+            const newState = { ...oldState };
+            console.log(folders,folderId)
+            newState[folderId].playgrounds[uuid()] = {
                 title: playgroundName,
                 language: language,
                 code: languageMap[language].defaultCode,
             }
-            return newFolders;
+
+            return newState;
         })
     }
+
     const addPlaygroundAndFolder = (folderName, playgroundName, cardLanguage) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            newFolders[uuid()] = {
+        setFolders((oldState) => {
+            const newState = { ...oldState }
+
+            newState[uuid()] = {
                 title: folderName,
                 playgrounds: {
                     [uuid()]: {
@@ -137,29 +135,33 @@ const PlaygroundProvider = ({ children }) => {
                     }
                 }
             }
-            return newFolders;
+
+            return newState;
         })
     }
-    const editFolderTitle = (folderId, newTitle) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            newFolders[folderId].title = newTitle;
-            return newFolders;
+
+    const editFolderTitle = (folderId, folderName) => {
+        setFolders((oldState) => {
+            const newState = { ...oldState }
+            newState[folderId].title = folderName;
+            return newState;
         })
     }
-    const editPlaygroundTitle = (folderId, cardId, newTitle) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            newFolders[folderId].playgrounds[cardId].title = newTitle;
-            return newFolders;
+
+    const editPlaygroundTitle = (folderId, cardId, PlaygroundTitle) => {
+        setFolders((oldState) => {
+            const newState = { ...oldState }
+            newState[folderId].playgrounds[cardId].title = PlaygroundTitle;
+            return newState;
         })
     }
-    const saveCode = (folderId, cardId, newCode, newLanguage) => {
-        setFolders((prevFolders) => {
-            const newFolders = { ...prevFolders };
-            newFolders[folderId].playgrounds[cardId].code = newCode;
-            newFolders[folderId].playgrounds[cardId].language = newLanguage;
-            return newFolders;
+
+    const savePlayground = (folderId, cardId, newCode, newLanguage) => {
+        setFolders((oldState) => {
+            const newState = { ...oldState };
+            newState[folderId].playgrounds[cardId].code = newCode;
+            newState[folderId].playgrounds[cardId].language = newLanguage;
+            return newState;
         })
     }
 
@@ -172,12 +174,14 @@ const PlaygroundProvider = ({ children }) => {
         addPlaygroundAndFolder: addPlaygroundAndFolder,
         editFolderTitle: editFolderTitle,
         editPlaygroundTitle: editPlaygroundTitle,
-        saveCode: saveCode,
+        savePlayground: savePlayground,
     }
+
     return (
         <PlayGroundContext.Provider value={PlayGroundFeatures}>
             {children}
-        </PlayGroundContext.Provider>)
+        </PlayGroundContext.Provider>
+    )
 }
 
-export default PlaygroundProvider;
+export default PlayGroundProvider;
